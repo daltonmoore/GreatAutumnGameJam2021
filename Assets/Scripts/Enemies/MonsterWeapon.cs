@@ -6,27 +6,52 @@ public class MonsterWeapon : MonoBehaviour
 {
     public int damage = 10;
 
-    float damageCooldown = .5f;
-    float lastHitTime;
+    float weaponCooldown = 1;
+    Coroutine damageCoroutine;
+    CircleCollider2D weaponCollider;
 
-    private void OnTriggerStay2D(Collider2D collision)
+    private void Start()
     {
-        CheckHitObject(collision.tag);
+        weaponCollider = GetComponent<CircleCollider2D>();
     }
 
-    void CheckHitObject(string objectTag)
+    private void Update()
     {
-        switch (objectTag)
+        //weaponCollider.
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (CheckHitObject(collision.tag))
         {
-            case Constants.Tags.Player:
-                if (lastHitTime + damageCooldown < Time.time)
-                {
-                    lastHitTime = Time.time;
-                    PlayerController.instance.ReceiveDamage(damage);
-                }
-                break;
-            case Constants.Tags.WellHeart:
-                break;
+            weaponCollider.enabled = false;
+            //weaponCollider.is
         }
+    }
+
+    bool CheckHitObject(string objectTag)
+    {
+        if (damageCoroutine == null)
+        {
+            switch (objectTag)
+            {
+                case Constants.Tags.Player:
+                    PlayerController.instance.ReceiveDamage(damage);
+                    damageCoroutine = StartCoroutine(DamageCooldown());
+                    return true;
+                case Constants.Tags.WellHeart:
+                    SpawnManager.instance.WellHearts[0].ReceiveDamage();
+                    damageCoroutine = StartCoroutine(DamageCooldown());
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    IEnumerator DamageCooldown()
+    {
+        yield return new WaitForSeconds(weaponCooldown);
+        damageCoroutine = null;
+        weaponCollider.enabled = true;
     }
 }

@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class Monster : MonoBehaviour
 {
-    [SerializeField] float m_speed;
-    [SerializeField] float m_collisionForce = 1;
+    [SerializeField] protected float m_speed = 1;
+    [SerializeField] float m_collisionForce = 54;
     [SerializeField] int m_healthMax = 30;
     [SerializeField] ParticleSystem PS_Death;
     [SerializeField] Slider m_healthBar;
@@ -30,7 +30,7 @@ public class Monster : MonoBehaviour
         }
     }
 
-    void Start()
+    protected virtual void Start()
     {
         m_currentHealth = m_healthMax;
         m_healthBar.value = m_healthMax;
@@ -39,7 +39,7 @@ public class Monster : MonoBehaviour
         m_rigid = GetComponent<Rigidbody2D>();
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (m_seesPlayer)
         {
@@ -49,7 +49,6 @@ public class Monster : MonoBehaviour
         {
             MoveTowardsWellHeart();
         }
-        //MoveTowardsWellHeart();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -90,18 +89,31 @@ public class Monster : MonoBehaviour
         m_rigid.velocity = dir.normalized * m_speed;
     }
 
-    void MoveTowardsWellHeart()
+    protected void MoveTowardsLocation(Vector2 loc)
     {
-        Vector2 dir = (Vector2)SpawnManager.instance.WellHearts[0].transform.position - (Vector2)transform.position;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dir);
-        if (hit && hit.collider.tag == Constants.Tags.Collision)
+        Vector2 dir = loc - (Vector2)transform.position;
+        Debug.Log(dir.x);
+        m_animator.SetFloat("horizontal", dir.x);
+        m_animator.SetFloat("vertical", dir.y);
+        m_rigid.velocity = dir.normalized * m_speed;
+    }
+
+    protected void MoveTowardsWellHeart()
+    {
+        Vector2 wellHeartLoc = SpawnManager.instance.WellHearts[0].transform.position;
+        try
         {
-            
+            if (Vector2.Distance(transform.position, wellHeartLoc) > 2)
+            {
+                Vector2 dir = wellHeartLoc - (Vector2)transform.position;
+                m_rigid.velocity = dir.normalized * m_speed;
+            }
+            else
+            {
+                m_rigid.velocity = Vector2.zero;
+            }
         }
-        else
-        {
-            m_rigid.velocity = dir.normalized * m_speed;
-        }
+        catch { }
     }
 
     void UpdateHealthBar()
@@ -116,6 +128,7 @@ public class Monster : MonoBehaviour
             case Drops.none:
                 break;
             case Drops.seed:
+                Instantiate(DropPrefabLists[0], transform.position, Quaternion.identity);
                 break;
         }
     }
