@@ -41,6 +41,14 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Devour"",
+                    ""type"": ""Button"",
+                    ""id"": ""40fb2d23-15e7-4495-92c6-a08f703fd4f9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -120,6 +128,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""Attack"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""421599b3-b1fe-4f0d-a118-45c7b61ff204"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Devour"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -158,6 +177,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Player_Movement = m_Player.FindAction("Movement", throwIfNotFound: true);
         m_Player_TorchToggle = m_Player.FindAction("TorchToggle", throwIfNotFound: true);
         m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
+        m_Player_Devour = m_Player.FindAction("Devour", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Pause = m_UI.FindAction("Pause", throwIfNotFound: true);
@@ -213,6 +233,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private readonly InputAction m_Player_Movement;
     private readonly InputAction m_Player_TorchToggle;
     private readonly InputAction m_Player_Attack;
+    private readonly InputAction m_Player_Devour;
     public struct PlayerActions
     {
         private @PlayerControls m_Wrapper;
@@ -220,6 +241,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public InputAction @Movement => m_Wrapper.m_Player_Movement;
         public InputAction @TorchToggle => m_Wrapper.m_Player_TorchToggle;
         public InputAction @Attack => m_Wrapper.m_Player_Attack;
+        public InputAction @Devour => m_Wrapper.m_Player_Devour;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -238,6 +260,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @Attack.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttack;
                 @Attack.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttack;
                 @Attack.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnAttack;
+                @Devour.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDevour;
+                @Devour.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDevour;
+                @Devour.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnDevour;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -251,6 +276,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @Attack.started += instance.OnAttack;
                 @Attack.performed += instance.OnAttack;
                 @Attack.canceled += instance.OnAttack;
+                @Devour.started += instance.OnDevour;
+                @Devour.performed += instance.OnDevour;
+                @Devour.canceled += instance.OnDevour;
             }
         }
     }
@@ -293,6 +321,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         void OnMovement(InputAction.CallbackContext context);
         void OnTorchToggle(InputAction.CallbackContext context);
         void OnAttack(InputAction.CallbackContext context);
+        void OnDevour(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

@@ -17,7 +17,7 @@ public class MonsterWeapon : MonoBehaviour
 
     private void Update()
     {
-        //weaponCollider.
+
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

@@ -19,12 +19,14 @@ public class GameManager : MonoBehaviour
             return instance;
         }
     }
-
+    
     public event EventHandler<GameOverEventArgs> GameOver;
+    public float soulsCount = 0;
+    public float soulsMax = 1000;
+    public enum GameOverReason { WellHeartDestroyed, PlayerDeath }
+
     int wellHeartCount = 0;
     bool isGameOver;
-
-    public enum GameOverReason { WellHeartDestroyed, PlayerDeath}
 
     public void ResumeGame()
     {
@@ -36,6 +38,12 @@ public class GameManager : MonoBehaviour
     {
         PlayerController.instance.DisablePlayerControls();
         Time.timeScale = 0;
+    }
+
+    public void AddSouls(float souls)
+    {
+        soulsCount = Mathf.Clamp(soulsCount + souls, 0, soulsMax);
+        HUD.Instance.Refresh();
     }
 
     private void Awake()

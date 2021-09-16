@@ -24,8 +24,9 @@ public class HUD : MonoBehaviour
     [SerializeField] GameObject GameOverScreen;
     [SerializeField] GameObject GameOverText;
     [SerializeField] GameObject GameOverTextReason;
-    // 
+    // Player HUD
     [SerializeField] Slider m_healthBar;
+    [SerializeField] Slider m_soulsBar;
     // Pause UI
     [SerializeField] GameObject PauseScreen;
 
@@ -66,7 +67,8 @@ public class HUD : MonoBehaviour
 
     public void Refresh()
     {
-        m_healthBar.value = PlayerController.instance.Health;
+        m_healthBar.value = PlayerController.instance.m_health;
+        m_soulsBar.value = GameManager.Instance.soulsCount;
     }
 
     public void GameOver(object sender, GameManager.GameOverEventArgs e)

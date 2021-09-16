@@ -5,13 +5,9 @@ using UnityEngine;
 public class Villager : Monster
 {
     [SerializeField] GameObject TownTravelRadius;
-
-    [SerializeField] protected State state;
-    protected enum State { none, wanderingTown, attackingPlayer, attackingWellHeart }
+    [SerializeField] List<ParticleSystem> particleSystems;
 
     Coroutine moveTowardsCoroutine;
-
-
 
     // Start is called before the first frame update
     protected override void Start()
@@ -27,32 +23,14 @@ public class Villager : Monster
         {
             case State.none:
                 break;
-            case State.wanderingTown:
+            case State.wandering:
                 GetRandomPointToMoveTo();
                 break;
             case State.attackingPlayer:
+                MoveTowardsPlayer();
                 break;
             case State.attackingWellHeart:
                 MoveTowardsWellHeart();
-                break;
-            default:
-                break;
-        }
-    }
-
-    void ChangeState(State state)
-    {
-        this.state = state;
-        switch (state)
-        {
-            case State.none:
-                break;
-            case State.wanderingTown:
-
-                break;
-            case State.attackingPlayer:
-                break;
-            case State.attackingWellHeart:
                 break;
             default:
                 break;
@@ -102,5 +80,15 @@ public class Villager : Monster
             yield return new WaitForEndOfFrame();
         }
         moveTowardsCoroutine = null;
+    }
+
+    protected override void Death()
+    {
+        base.Death();
+        foreach (ParticleSystem ps in particleSystems)
+        {
+            Util.CreateParticleSystem(ps, transform.position);
+        }
+        GameManager.Instance.AddSouls(20);
     }
 }

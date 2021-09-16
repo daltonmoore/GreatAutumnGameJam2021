@@ -15,7 +15,8 @@ public class PlayerController : MonoBehaviour
     public float m_arrowSpeed = 30;
     public float m_arrowLifeSpan = 3;
     public float m_attackCooldown = 1;
-    public float Health = 100;
+    public float m_health = 100;
+    public float m_maxHealth = 100;
     [SerializeField] Light2D Torch;
     [SerializeField] Transform PlayerSpawn;
     [SerializeField] GameObject Arrow;
@@ -25,19 +26,25 @@ public class PlayerController : MonoBehaviour
     [SerializeField] List<AudioClip> ac_steps;
     [SerializeField] AudioSource walkingAudioSource, sfxAudioSource;
 
+    [Header("UI")]
+    [SerializeField] GameObject InteractKeyPopUp;
+
     bool m_holdingMoveKey;
     bool m_holdingAttackKey;
     bool m_HUDDirty;
     bool m_isDead;
     float m_lastAttackTime;
+    GameObject DevourObject;
     PlayerControls controls;
     Rigidbody2D m_Rigid;
+    Queue<GameObject> devourQueue = new Queue<GameObject>();
+    List<GameObject> devourList = new List<GameObject>();
     Vector2 m_MoveValue;
 
     public void ReceiveDamage(int damage)
     {
-        Health -= damage;
-        if(Health <= 0)
+        m_health -= damage;
+        if(m_health <= 0)
         {
             Death();
         }
@@ -59,6 +66,7 @@ public class PlayerController : MonoBehaviour
         controls.Player.Disable();
     }
 
+    #region Unity Methods
     private void Awake()
     {
         instance = this;
@@ -72,7 +80,7 @@ public class PlayerController : MonoBehaviour
         // Attack
         controls.Player.Attack.started += Attack_started;
         controls.Player.Attack.canceled += Attack_canceled;
-
+        controls.Player.Devour.started += Devour_started;
         // UI
         controls.UI.Pause.started += HUD.Instance.PauseGame;
         controls.UI.Pause.started += GameManager.Instance.PauseGame;
@@ -111,6 +119,29 @@ public class PlayerController : MonoBehaviour
         controls.Player.Disable();
         controls.UI.Disable();
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == Constants.Tags.Enemy)
+        {
+            if (!devourList.Contains(collision.gameObject))
+                devourList.Add(collision.gameObject);
+            ToggleUI(InteractKeyPopUp, true);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.tag == Constants.Tags.Enemy)
+        {
+            if (devourList.Contains(collision.gameObject))
+                devourList.Remove(collision.gameObject);
+        }
+
+        if (devourList.Count == 0)
+            ToggleUI(InteractKeyPopUp, false);
+    }
+    #endregion
 
     private void Death()
     {
@@ -170,10 +201,21 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void ToggleUI(GameObject ui, bool toggle)
+    {
+        ui.SetActive(toggle);
+    }
+
     private void RefreshHUD()
     {
         m_HUDDirty = false;
         HUD.Instance.Refresh();
+    }
+
+    private void Heal(float amount)
+    {
+        m_health = Mathf.Clamp(m_health + amount, 0, m_maxHealth);
+        m_HUDDirty = true;
     }
 
     private IEnumerator DisablePlayerInputForTimeSpan()
@@ -184,6 +226,23 @@ public class PlayerController : MonoBehaviour
     }
 
     #region PlayerControls Callbacks
+    private void Devour_started(InputAction.CallbackContext obj)
+    {
+        if(devourList.Count > 0)
+            DevourObject = devourList[0];
+
+        if (DevourObject)
+        {
+            Monster monster = DevourObject.GetComponent<Monster>();
+            monster.Devoured();
+            Heal(20);
+            DevourObject = null;
+
+            if (devourList.Count == 0)
+                ToggleUI(InteractKeyPopUp, false);
+        }
+    }
+
     private void Attack_started(InputAction.CallbackContext obj)
     {
         m_holdingAttackKey = true;
