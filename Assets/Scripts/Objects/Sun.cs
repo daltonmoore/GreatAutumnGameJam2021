@@ -6,14 +6,14 @@ using UnityEngine.Experimental.Rendering.Universal;
 
 public class Sun : MonoBehaviour
 {
-    public event EventHandler OnSunSet;
+    public event EventHandler SunSet, SunRise;
 
     [SerializeField] GameObject SunStart;
     [SerializeField] GameObject SunEnd;
     [Header("Tuners")]
-    [SerializeField] bool onlyNight;
-    [SerializeField] float cycleSpeed;
+    [SerializeField] float sunMoveSpeed;
     [SerializeField] float nightLength;
+    [SerializeField] float dayLength;
 
     Light2D light2D;
     Coroutine cycle;
@@ -29,27 +29,29 @@ public class Sun : MonoBehaviour
 
     private void Update()
     {
-        if(!onlyNight && cycle == null)
+        if(cycle == null)
         {
             cycleStartTime = Time.time;
             cycle = StartCoroutine(BeginCycle());
-        }
-        else if(onlyNight && cycle == null)
-        {
-            cycleStartTime = Time.time;
-            cycle = StartCoroutine(NightCycle());
         }
     }
 
     IEnumerator BeginCycle()
     {
         transform.position = SunStart.transform.position;
+        DayTime();
         while (true)
         {
-            float distCovered = (Time.time - cycleStartTime) * cycleSpeed;
+            float distCovered = (Time.time - cycleStartTime) * sunMoveSpeed;
             float fractionOfJourney = distCovered / journeyLength;
-            transform.position = Vector3.Lerp(SunStart.transform.position, SunEnd.transform.position, fractionOfJourney);
-            if (transform.position == SunEnd.transform.position)
+            if(transform.position != SunEnd.transform.position)
+                transform.position = Vector3.Lerp(SunStart.transform.position, SunEnd.transform.position, fractionOfJourney);
+
+            if ((Time.time - cycleStartTime) / dayLength > .80f) // 80% through day cycle so start bringing the intensity down
+                light2D.intensity-=.001f;
+
+
+            if (dayLength < Time.time - cycleStartTime)
                 break;
             yield return new WaitForEndOfFrame();
         }
@@ -61,18 +63,19 @@ public class Sun : MonoBehaviour
         NightTime();
         yield return new WaitForSeconds(nightLength);
         DayTime();
+        cycle = null;
     }
 
     void DayTime()
     {
         light2D.enabled = true;
-        cycle = null;
+        SunRise?.Invoke(this, null);
     }
 
 
     void NightTime()
     {
         light2D.enabled = false;
-        OnSunSet?.Invoke(this, null);
+        SunSet?.Invoke(this, null);
     }
 }

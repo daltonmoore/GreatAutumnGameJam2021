@@ -27,8 +27,12 @@ public class HUD : MonoBehaviour
     // Player HUD
     [SerializeField] Slider m_healthBar;
     [SerializeField] Slider m_soulsBar;
+    [SerializeField] Slider m_wellheartBar;
+
     // Pause UI
     [SerializeField] GameObject PauseScreen;
+    //
+    [SerializeField] GameObject WinScreen;
 
     private void Awake()
     {
@@ -44,8 +48,14 @@ public class HUD : MonoBehaviour
 
     private void Start()
     {
-        GameManager.Instance.GameOver += GameOver;
+        GameManager.Instance.GameOver += OnGameOver;
+        GameManager.Instance.GameWin += OnGameWin;
         SetAlphaOfGameOverScreen(0, 0);
+    }
+
+    public void UpdateWellheartHealthBar(float val)
+    {
+        m_wellheartBar.value = val;
     }
 
     public void ResumeGame()
@@ -71,11 +81,18 @@ public class HUD : MonoBehaviour
         m_soulsBar.value = GameManager.Instance.soulsCount;
     }
 
-    public void GameOver(object sender, GameManager.GameOverEventArgs e)
+    public void OnGameOver(object sender, GameManager.GameOverEventArgs e)
     {
+        GameOverScreen.SetActive(true);
         GameOverTextReason.GetComponent<Text>().text = e.GameOverText;
         SetAlphaOfGameOverScreen(1, 1);
         Debug.Log("Game Over");
+    }
+
+    public void OnGameWin(object sender, System.EventArgs e)
+    {
+        WinScreen.SetActive(true);
+        Debug.Log("Game Win");
     }
 
     void SetAlphaOfGameOverScreen(float alpha, float duration)

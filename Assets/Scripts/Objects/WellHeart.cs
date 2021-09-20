@@ -20,6 +20,7 @@ public class WellHeart : MonoBehaviour
         //}
         health -= 5;
         healthBar.value = health;
+        HUD.Instance.UpdateWellheartHealthBar(health);
         if (health <= 0)
         {
             WellHeartDeath?.Invoke(this, null);

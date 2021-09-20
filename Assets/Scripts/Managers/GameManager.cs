@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     }
     
     public event EventHandler<GameOverEventArgs> GameOver;
+    public event EventHandler GameWin;
     public float soulsCount = 0;
     public float soulsMax = 1000;
     public enum GameOverReason { WellHeartDestroyed, PlayerDeath }
@@ -44,6 +45,13 @@ public class GameManager : MonoBehaviour
     {
         soulsCount = Mathf.Clamp(soulsCount + souls, 0, soulsMax);
         HUD.Instance.Refresh();
+
+        if(soulsCount == soulsMax)
+        {
+            GameWin?.Invoke(this, null);
+            PlayerController.instance.DisablePlayerControls();
+            SpawnManager.instance.DestroyAll();
+        }
     }
 
     private void Awake()
@@ -70,7 +78,7 @@ public class GameManager : MonoBehaviour
 
     private void OnPlayerDeath(object sender, EventArgs e)
     {
-        OnGameOver(GameOverReason.PlayerDeath);
+        TriggerGameOver(GameOverReason.PlayerDeath);
     }
 
     private void OnWellHeartDeath(object sender, EventArgs e)
@@ -78,11 +86,11 @@ public class GameManager : MonoBehaviour
         wellHeartCount--;
         if (wellHeartCount <= 0)
         {
-            OnGameOver(GameOverReason.WellHeartDestroyed);
+            TriggerGameOver(GameOverReason.WellHeartDestroyed);
         }
     }
 
-    private void OnGameOver(GameOverReason gameOverReason)
+    private void TriggerGameOver(GameOverReason gameOverReason)
     {
         if (!isGameOver)
         {

@@ -6,6 +6,7 @@ public class Villager : Monster
 {
     [SerializeField] GameObject TownTravelRadius;
     [SerializeField] List<ParticleSystem> particleSystems;
+    [SerializeField] float m_soulsOnDeath;
 
     Coroutine moveTowardsCoroutine;
 
@@ -13,7 +14,8 @@ public class Villager : Monster
     protected override void Start()
     {
         base.Start();
-        //ChangeState(State.wanderingTown);
+        TownTravelRadius = GameObject.Find("TownTravel Radius");
+        state = State.wandering;
     }
 
     // Update is called once per frame
@@ -27,35 +29,49 @@ public class Villager : Monster
                 GetRandomPointToMoveTo();
                 break;
             case State.attackingPlayer:
-                MoveTowardsPlayer();
+                if (m_seesPlayer)
+                    MoveTowardsLocation(m_player.transform.position);
+                else
+                    state = State.wandering;
                 break;
             case State.attackingWellHeart:
-                MoveTowardsWellHeart();
+                MoveTowardsLocation(m_wellHeartLoc);
                 break;
             default:
                 break;
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == Constants.Tags.Player)
+        {
+            m_seesPlayer = true;
+            m_player = collision.gameObject;
+            state = State.attackingPlayer;
+        }
+    }
+
+    Vector2 randomPoint;
     void GetRandomPointToMoveTo()
     {
         if (moveTowardsCoroutine == null)
         {
             Bounds townBounds = TownTravelRadius.GetComponent<CircleCollider2D>().bounds;
-            Vector2 randomPoint = Random.insideUnitCircle * (Vector2)townBounds.extents + (Vector2)townBounds.center;
+            randomPoint = Random.insideUnitCircle * (Vector2)townBounds.extents + (Vector2)townBounds.center;
             // debug random point visual
-            GameObject go = Instantiate(Resources.Load<GameObject>("Inside Circle_"), randomPoint, Quaternion.identity);
-            Collider2D collider2D = Physics2D.OverlapBox(randomPoint, new Vector2(1, 1), 0);
+            //GameObject go = Instantiate(Resources.Load<GameObject>("Inside Circle_"), randomPoint, Quaternion.identity);
+            Collider2D collider2D = Physics2D.OverlapBox(randomPoint, new Vector2(5, 5), 0);
             if (collider2D)
             {
-                Debug.Log(collider2D.name);
-                Destroy(go);
+                //Debug.Log(collider2D.name);
+                //Destroy(go);
                 return;
             }
             else
             {
-                Debug.Log("Did not overlap anything");
-                Destroy(go, 8);
+                //Debug.Log("Did not overlap anything");
+                //Destroy(go, 8);
             }
             moveTowardsCoroutine = StartCoroutine(MoveTowardsRandomPoint(randomPoint));
         }
@@ -79,6 +95,7 @@ public class Villager : Monster
             MoveTowardsLocation(randomPoint);
             yield return new WaitForEndOfFrame();
         }
+        Debug.Log(name + ": made it destination");
         moveTowardsCoroutine = null;
     }
 
@@ -89,6 +106,13 @@ public class Villager : Monster
         {
             Util.CreateParticleSystem(ps, transform.position);
         }
-        GameManager.Instance.AddSouls(20);
+        GameManager.Instance.AddSouls(m_soulsOnDeath);
+    }
+
+    public void OnDrawGizmosSelected()
+    {
+        if (!isActiveAndEnabled) return;
+
+        Gizmos.DrawWireSphere(new Vector3(randomPoint.x, randomPoint.y, 0),1);
     }
 }

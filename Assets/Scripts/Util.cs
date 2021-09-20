@@ -18,4 +18,9 @@ public class Util : MonoBehaviour
         ParticleSystem ps = Instantiate(particleSystem, pos, Quaternion.identity);
         ps.Play();
     }
+
+    public static float LinearToDB(float val)
+    {
+        return Mathf.Log10(val) * 20;
+    }
 }

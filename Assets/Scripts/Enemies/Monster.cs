@@ -2,9 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SensorToolkit;
+using System;
 
 public class Monster : MonoBehaviour
 {
+    public event EventHandler Died;
+
     [SerializeField] AudioClip ac_death;
     [SerializeField] AudioClip ac_wounded;
     [SerializeField] AudioClip ac_attack;
@@ -15,16 +19,19 @@ public class Monster : MonoBehaviour
     [SerializeField] int m_healthMax = 30;
     [SerializeField] ParticleSystem PS_Death;
     [SerializeField] Slider m_healthBar;
+    [SerializeField] SteeringRig2D steeringRig;
+
     protected enum Drops { none, seed }
     [SerializeField] protected State state;
     protected enum State { none, wandering, attackingPlayer, attackingWellHeart, dead }
+    protected Vector2 m_wellHeartLoc;
+    protected GameObject m_player;
+    protected Rigidbody2D m_rigid;
+    protected bool m_seesPlayer;
 
     Animator m_animator;
     AudioSource m_audioSource;
-    bool m_seesPlayer;
-    GameObject m_player;
     int m_currentHealth = 30;
-    Rigidbody2D m_rigid;
 
     public void ReceiveDamage(int damage)
     {
@@ -43,11 +50,6 @@ public class Monster : MonoBehaviour
         Death();
     }
 
-    private void ChangeAudioClip(AudioClip ac)
-    {
-        m_audioSource.clip = ac;
-    }
-
     protected virtual void Start()
     {
         m_currentHealth = m_healthMax;
@@ -56,17 +58,30 @@ public class Monster : MonoBehaviour
         m_animator = GetComponent<Animator>();
         m_audioSource = GetComponent<AudioSource>();
         m_rigid = GetComponent<Rigidbody2D>();
+        m_wellHeartLoc = GetWellHeartLocation();
+        steeringRig.IgnoreList.AddRange(new List<GameObject> { PlayerController.instance.gameObject, SpawnManager.instance.WellHearts[0].gameObject });
+
     }
 
     protected virtual void Update()
     {
-        if (m_seesPlayer)
+        switch (state)
         {
-            MoveTowardsPlayer();
-        }
-        else
-        {
-            MoveTowardsWellHeart();
+            case State.none:
+                break;
+            case State.wandering:
+                break;
+            case State.attackingPlayer:
+                if (m_seesPlayer)
+                    MoveTowardsLocation(m_player.transform.position);
+                else
+                    state = State.attackingWellHeart;
+                break;
+            case State.attackingWellHeart:
+                MoveTowardsLocation(m_wellHeartLoc);
+                break;
+            default:
+                break;
         }
     }
 
@@ -109,37 +124,25 @@ public class Monster : MonoBehaviour
             collision.rigidbody.AddForce(m_collisionForce * direction, ForceMode2D.Impulse);
         }
     }
-
-    protected void MoveTowardsPlayer()
+    protected Vector2 GetWellHeartLocation()
     {
-        Vector2 dir = (Vector2)m_player.transform.position - (Vector2)transform.position;
-        m_animator.SetFloat("horizontal", dir.x);
-        m_animator.SetFloat("vertical", dir.y);
-        m_rigid.velocity = dir.normalized * m_speed;
+        if (SpawnManager.instance.WellHearts.Count <= 0)
+            return Vector2.negativeInfinity;
+
+        return SpawnManager.instance.WellHearts[0].transform.position;
     }
 
     protected void MoveTowardsLocation(Vector2 loc)
     {
+        if (loc == Vector2.negativeInfinity)
+            return;
+
         Vector2 dir = loc - (Vector2)transform.position;
-        Debug.Log(dir.x);
+        dir = steeringRig.GetSteeredDirection(dir);
         m_animator.SetFloat("horizontal", dir.x);
         m_animator.SetFloat("vertical", dir.y);
+
         m_rigid.velocity = dir.normalized * m_speed;
-    }
-
-    protected void MoveTowardsWellHeart()
-    {
-        Vector2 wellHeartLoc = SpawnManager.instance.WellHearts[0].transform.position;
-
-        if (Vector2.Distance(transform.position, wellHeartLoc) > 2)
-        {
-            Vector2 dir = wellHeartLoc - (Vector2)transform.position;
-            m_rigid.velocity = dir.normalized * m_speed;
-        }
-        else
-        {
-            m_rigid.velocity = Vector2.zero;
-        }
     }
 
     protected void UpdateHealthBar()
@@ -161,6 +164,7 @@ public class Monster : MonoBehaviour
 
     protected virtual void Death()
     {
+        Died?.Invoke(this, null);
         StopAllCoroutines();
         // create and play death particle system
         var ps = Instantiate(PS_Death, transform.position, Quaternion.identity);
