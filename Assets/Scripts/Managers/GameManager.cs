@@ -98,6 +98,7 @@ public class GameManager : MonoBehaviour
             GameOverEventArgs eventArgs = new GameOverEventArgs(gameOverReason);
             GameOver?.Invoke(this, eventArgs);
             PlayerController.instance.DisablePlayerControls();
+            SpawnManager.instance.DestroyAll();
             StartCoroutine(LoadSceneDelay(3, "MainMenu"));
         }
     }
