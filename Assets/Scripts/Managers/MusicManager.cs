@@ -78,13 +78,13 @@ public class MusicManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        #if UNITY_EDITOR
-        if (Input.GetKeyDown("f"))
-        {
-            PlayerPrefs.DeleteAll();
-            Debug.Log("Deleted player prefs");
-        }
-        #endif
+        //#if UNITY_EDITOR
+        //if (Input.GetKeyDown("f"))
+        //{
+        //    PlayerPrefs.DeleteAll();
+        //    Debug.Log("Deleted player prefs");
+        //}
+        //#endif
 
         if (inMainScene)
             PlayRandomSong();

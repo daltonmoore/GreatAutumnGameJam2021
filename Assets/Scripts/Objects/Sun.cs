@@ -14,6 +14,7 @@ public class Sun : MonoBehaviour
     [SerializeField] float sunMoveSpeed;
     [SerializeField] float nightLength;
     [SerializeField] float dayLength;
+    [SerializeField] float sunStartIntensity;
 
     Light2D light2D;
     Coroutine cycle;
@@ -69,6 +70,7 @@ public class Sun : MonoBehaviour
     void DayTime()
     {
         light2D.enabled = true;
+        light2D.intensity = sunStartIntensity;
         SunRise?.Invoke(this, null);
     }
 
